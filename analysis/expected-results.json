@@ -1,0 +1,122 @@
+{
+  "primary_check": {
+    "candidate": "deferred13",
+    "baseline": "immediate",
+    "cases": 840,
+    "mean_paired_gain": 5.1032356146479225,
+    "mean_time_saved_seconds": 498.09953181355195,
+    "median_gain": 0.0,
+    "p05_gain": -0.1509524377197299,
+    "worst_gain": -21.57450952402664,
+    "faster_tied_slower": [
+      377,
+      420,
+      43
+    ],
+    "candidate_mean_seconds": 9530.205588853429,
+    "baseline_mean_seconds": 10028.30512066698,
+    "ci95": [
+      4.557963315410808,
+      5.640731050819524
+    ],
+    "seed_clusters": 30,
+    "settings_per_cluster": 28,
+    "bootstrap_samples": 10000,
+    "bootstrap_seed": 2026100204,
+    "exclusions": 0,
+    "scope": "reproduction of prespecified primary summary",
+    "published_input": "data/primary_check_pairs.csv",
+    "published_input_sha256": "3a9a81167489d5eed29ef82c710cd2cce0f9fbb22bf66c45b0499490a6358163",
+    "original_run_table_sha256": "ae4ffadb662751bec984bbd736f7d94fed97fe6a684b9bca1ebf778b8f1b7c34"
+  },
+  "same_window_reuse": {
+    "candidate": "deferred13",
+    "baseline": "deferred13_no_reuse",
+    "cases": 840,
+    "mean_paired_gain": 6.421460567163907,
+    "mean_time_saved_seconds": 624.8468942944213,
+    "median_gain": 0.0,
+    "p05_gain": 0.0,
+    "worst_gain": -4.383072891519424,
+    "faster_tied_slower": [
+      418,
+      420,
+      2
+    ],
+    "candidate_mean_seconds": 9530.205588853429,
+    "baseline_mean_seconds": 10155.05248314785,
+    "ci95": [
+      5.860836414772962,
+      7.004029094722945
+    ],
+    "seed_clusters": 30,
+    "settings_per_cluster": 28,
+    "bootstrap_samples": 10000,
+    "bootstrap_seed": 2026100204,
+    "exclusions": 0,
+    "scope": "post hoc descriptive paired analysis of saved runs; no new samples",
+    "published_input": "data/same_window_reuse_pairs.csv",
+    "published_input_sha256": "056b940c1ff4907c45551ca489d3bce0ff116721bd8205515a57205c4ea849af",
+    "original_run_table_sha256": "ae4ffadb662751bec984bbd736f7d94fed97fe6a684b9bca1ebf778b8f1b7c34"
+  },
+  "joint_reuse": {
+    "candidate": "joint_routing_reuse",
+    "baseline": "joint_routing",
+    "cases": 360,
+    "mean_paired_gain": 10.128170292925436,
+    "mean_time_saved_seconds": 913.6529484909605,
+    "median_gain": 9.924572284839838,
+    "p05_gain": -4.234738125250791,
+    "worst_gain": -39.678150273202206,
+    "faster_tied_slower": [
+      310,
+      0,
+      50
+    ],
+    "candidate_mean_seconds": 7800.97852745757,
+    "baseline_mean_seconds": 8714.63147594853,
+    "ci95": [
+      9.013133883353753,
+      11.245106346314255
+    ],
+    "seed_clusters": 20,
+    "settings_per_cluster": 18,
+    "bootstrap_samples": 10000,
+    "bootstrap_seed": 2026100210,
+    "exclusions": 0,
+    "scope": "post hoc descriptive paired analysis of saved runs; no new samples",
+    "published_input": "data/joint_reuse_pairs.csv",
+    "published_input_sha256": "190d6475e827b60419b7dffc2d05fd264b97b5804a51cdfe566aaf85c5aadde3",
+    "original_run_table_sha256": "3e2c866c4555a7ff61b51eb456317e0c835b81b74932c5da78f5ac2b36eb3002"
+  },
+  "joint_complete": {
+    "candidate": "joint_routing_reuse",
+    "baseline": "immediate",
+    "cases": 360,
+    "mean_paired_gain": 13.636250413864204,
+    "mean_time_saved_seconds": 1294.5912600469314,
+    "median_gain": 13.785716908633844,
+    "p05_gain": -4.69145099535502,
+    "worst_gain": -30.438123657416515,
+    "faster_tied_slower": [
+      330,
+      0,
+      30
+    ],
+    "candidate_mean_seconds": 7800.97852745757,
+    "baseline_mean_seconds": 9095.5697875045,
+    "ci95": [
+      12.487818309797015,
+      14.786604980125897
+    ],
+    "seed_clusters": 20,
+    "settings_per_cluster": 18,
+    "bootstrap_samples": 10000,
+    "bootstrap_seed": 2026100210,
+    "exclusions": 0,
+    "scope": "post hoc descriptive paired analysis of saved runs; no new samples",
+    "published_input": "data/joint_complete_pairs.csv",
+    "published_input_sha256": "67eec863e4b6e4ab87e3f8964f256ab8c71fb4cd1dfcab00046c74b779cdf0ab",
+    "original_run_table_sha256": "3e2c866c4555a7ff61b51eb456317e0c835b81b74932c5da78f5ac2b36eb3002"
+  }
+}

@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "Please cite this versioned release when using the supplement or saved-result analysis."
+title: "En Route Bearing Reuse: Supplement S1 and Paired-Result Analysis"
+type: dataset
+authors:
+  - family-names: Yan
+    given-names: Jiarui
+  - family-names: Lei
+    given-names: Jie
+  - family-names: Xue
+    given-names: Jingyi
+version: 1.0.0
+date-released: 2026-11-20
+url: "https://github.com/Jarvis-Yan/en-route-bearing-reuse/releases/tag/v1.0.0"
+repository-code: "https://github.com/Jarvis-Yan/en-route-bearing-reuse"
+keywords:
+  - bearing-only localization
+  - mobile robot task planning
+  - observation reuse
+  - bounded error
+  - paired simulation analysis

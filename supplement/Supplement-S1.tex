@@ -1,0 +1,254 @@
+% Based on the final Supplement S1; self-contained source references added, 2026-11-20.
+% Source SHA-256: 522eecf6b4f2c6adac8f7137eaf3f1b90d375855ea311d1bd3afb7ab96db802c
+\documentclass[11pt,letterpaper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,booktabs,graphicx,array,tabularx}
+\usepackage[hidelinks]{hyperref}
+\urlstyle{same}
+\makeatletter
+\g@addto@macro\UrlBreaks{\do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j\do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t\do\u\do\v\do\w\do\x\do\y\do\z\do\0\do\1\do\2\do\3\do\4\do\5\do\6\do\7\do\8\do\9}
+\makeatother
+
+\usepackage[margin=0.75in]{geometry}
+\usepackage{caption}
+\renewcommand{\rmdefault}{ptm}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\theequation}{S\arabic{equation}}
+\captionsetup{font=small,labelfont=bf,hypcap=false}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+\begin{document}
+\begin{center}{\Large\bfseries Supplement S1}\end{center}
+
+\begin{center}{\large En Route Bearing Reuse for Complete Servicing of Radio Interference Sources}\end{center}
+
+This supplement specifies the sensing errors, geometric margins, controller rules, adapted controls, and extended results supporting the ICMA manuscript. References [S1]--[S5] are listed at the end of this supplement. All evaluations use the previously recorded scenarios and policies.
+
+\section*{S1.1 Exact sensing and scenario definitions}
+
+A measurement checks reception before proximity. Failed reception returns no-signal; successful reception within 5 m returns near without a bearing. Otherwise, the reported bearing is the true angle plus a deterministic error, reduced modulo 360, rounded to two decimal places with Python round, then reduced modulo 360 again. Service is a separate action and succeeds within 20 m independently of the emitting half-plane.
+
+At measurement position $q=(x,y)$, the smooth error in degrees is $\sin(x/137+y/191+\mathrm{seed}+k)$, with a radian argument and integer channel k. Positive and negative models use +1\ensuremath{^\circ} and \ensuremath{-}1\ensuremath{^\circ}. The hash model forms the UTF-8 string {\fontencoding{OT1}\fontfamily{cmtt}\selectfont f"\char123 seed\char125 :\char123 k\char125 :\char123 q!r\char125 "}, where q contains two Python floats; the unsigned big-endian integer h from the first eight bytes of its SHA-256 digest gives error $2h/(2^{64}-1)-1$ degrees. This is not Python's randomized built-in hash. Repeated measurements at an identical position and channel therefore receive the same error. The planner uses $\delta=1.01^\circ$ to include rounding.
+
+The primary 840 scenarios comprise 30 master seeds, seven source counts (10--16), and four settings. Random placement is uniform by area in the 1800 m disk, reception radii are uniform in [1000, 1500] m, and each source is directional with probability 0.6 with a uniform normal. Random scenes use smooth or hash error. Boundary sources lie on the 1800 m circle, have 1000 m radii, emit into outward radial half-planes, and use positive or negative bias. These strata combine layout, reception, and error differences.
+
+The transfer and joint cohorts each use 20 nonoverlapping master seeds, counts of 10, 13, or 16, smooth/hash errors, and three layouts, giving 360 scenarios per cohort. All sources are directional. Isotropic positions and normals are uniform by area and angle. Clustered scenes have three centers at radii 500--1200 m and offsets uniform by area within 180 m. Tangential-boundary sources lie on the 1800 m circle and choose either tangent as normal. Radii are uniform in [1000, 1500] m.
+
+\section*{S1.2 Coverage margins and recovery}
+
+The omnidirectional distance bound in Section III-B of the main article is a convex quadratic in \ensuremath{\rho}, so its maximum over the interval occurs at an endpoint. Substitution gives d \ensuremath{\le} 951.518 m, a margin of 48.482 m below the minimum reception radius. Scanning unfinished channels at these seven stations therefore discovers every omnidirectional source. With this split, the two endpoint constraints allow $1122.956\le a\le 1672.451$ m, which contains the chosen radius a = 1250~m.
+
+The longest triangle edge is the 990 m radial edge C--$I_i$. Adjacent inner-ring, outer-ring, and cross-ring edges measure 512.462, 983.512, and 977.899 m, respectively, all below the minimum reception radius of 1000 m. Enclosure satisfies the emitting-side condition, while the edge bound satisfies the distance condition. Together they establish the directional discovery proposition in the main article.
+
+The construction provides a 10 m reception-distance margin and a 35.259 m margin in the outer polygon's inradius; outer-ring stations lie outside the task disk. For a regular outer ring fixed at radius 1900 m, the adjacent-edge condition $2(1900)\sin(\pi/n)\le 1000$ requires at least 12 outer stations. This station-count statement applies to that construction.
+
+The first valid bearing defines a rectangle of length 1500 m and half-width $1500\sin(1.01^\circ)$. Dividing it into 54 longitudinal and two transverse cells yields 108 covering centers. Its maximum nearest-center distance is
+
+\begin{equation}\label{eq:s1}
+d_{\mathrm{grid}}\le\sqrt{\left(\frac{1500}{108}\right)^2+\left(750\sin\delta_{\mathrm{geom}}\right)^2}<20
+\end{equation}
+
+Here $\delta_{\mathrm{geom}}=1.01^\circ$. Cell side lengths in the implementation do not exceed 28 m, so the covering radius is at most $14\sqrt{2}<20$ m. If accumulated observations sufficiently constrain $P_k$, its axis-aligned bounding box may require fewer covering points. Recovery compares the two point counts, choosing the box cover when it is smaller and the first-bearing rectangle otherwise. Each call traverses only the selected cover in serpentine order, reversed when its last point is closer to the current position.
+
+Each recovery call receives a fresh allowance of 128 attempts, unaffected by earlier direct-service or recovery failures. For a cover with $M\le108$ points, let b points be skipped because of previous failures on the same channel. At most $M-b\le108<128$ new attempts suffice to traverse the cover. The skip tolerance is $10^{-6}$ m, smaller than the covering margin $20-14\sqrt{2}$ m.
+
+The successful point in a recovery cover has a positive distance margin below 20 m. A point skipped within $10^{-6}$ m of a previous failed attempt cannot be the sole successful covering point under the stated service model. The fresh 128-attempt allowance exceeds the 108-point cover size even when prior failures are recorded.
+
+\section*{S1.3 Follow-up candidates and controller details}
+
+Before recovery, the policy takes capped follow-up measurements to seek direct servicing and reduce traversal of covering points. Omnidirectional servicing allows three follow-up measurements; directional servicing allows four per localization call. The directional cap increases to six only if the fourth response is no-signal, exactly one valid bearing remains, and $r(P_k)>100$ m. En route measurements are counted separately. These fixed caps allow dedicated localization to reach recovery in finitely many steps when further servicing is needed.
+
+Follow-up candidates have a fixed order. After no-signal, the first candidate is the midpoint of the latest valid-observation position and the latest failed follow-up position. Next come each valid bearing's points $s+750u(\theta)+yu(\theta+90^\circ)$, with y = 200, \ensuremath{-}200, 100, and \ensuremath{-}100 m in that order. The final candidate is the MEC center. This set combines points interpolated between successful and failed reception positions, lateral offsets from bearings, and the current region center. After removing previously measured points on that channel and duplicates within $10^{-6}$ m, the ordinary control selects the first remaining candidate. Exhausting the set triggers a final MEC check and then finite recovery search, without resetting the follow-up budget.
+
+Only successful service responses update completion status. A failed direct-service attempt inside the follow-up loop ends that loop and activates the separate recovery allowance. When $P_k$ contains the source and $r(P_k)\le19.9$ m, the model guarantees direct-service success. Exception handling is specified below.
+
+The entry--exit proxy uses a source's first bearing within the current station batch. Its dynamic program is exact for the stated proxy costs; actual service travel uses the full updated feasible region. Subset search is limited to 12 tasks and a cumulative one-second soft budget with deadline checks. A single task bypasses the dynamic program. Ties within $10^{-6}$ m use channel identifiers. The deferred post-coverage set is ordered by direct-service readiness, entry distance, and channel identifier.
+
+Station selection sorts by floating-point distance, then x and y coordinates. Joint nearest-neighbor ties use stable job index; coincident tasks favor service. Near-equal distances can produce different visit orders across numerical environments, so reproduction uses the pinned interpreter. All compared variants charge measurements, switching, travel, and service attempts.
+
+Windowed scans include deferred channels with empty regions or MEC radius above 19.9 m; an empty region retains its task for later station observations. During service, recovery can be reconstructed from the first valid bearing. After exhausted recovery, the controller processes other tasks and returns unresolved channels. Joint scheduling raises an error for an empty detected-source region or exhausted recovery. Ideal containment excludes empty intersections; these are implementation exception paths, not additional in-model completion assumptions.
+
+\section*{S1.4 Candidate-selection controls}
+
+The Fisher-information heuristic controls \cite{sref3} in the 840-scenario evaluation maximize $\sum_i\operatorname{cross}(j_i,j_s)^2$, either directly or normalized by travel, sensing, and switching costs. Here $j=(-d_y,d_x)/\lVert d\rVert^2$ at the MEC position estimate. Candidates within 20 m of the estimate are excluded; if scores are nonpositive, the original ordering is retained. Coverage, candidate points, and servicing mechanisms are shared. The two controls yielded mean reductions of \ensuremath{-}8.311\% and \ensuremath{-}3.834\% against immediate servicing (Table S1). Under these fixed configurations, changing follow-up ordering did not yield the time savings of the windowed policy. These untuned geometric adaptations omit likelihoods and emission probabilities and differ in implementation scope from the original learned policy.
+
+The transfer controls adapt the multiobjective moment criterion of Mohammadi and Shafer \cite{sref5}. For active sources A, possible target nodes q, and area weights $w_{kq}$, their uncertainty objective is
+
+\begin{equation}\label{eq:s2}
+J_1(s)=\sum_{k\in A}\sum_q w_{kq}\iint_{\widehat P_k(s,q)}\lVert\xi-q\rVert^2\,\mathrm dA(\xi)
+\end{equation}
+
+For areas above $10^{-10}$ m\textsuperscript{2}, each triangle in a fan triangulation supplies three nodes, each weighted by $a_t/3$, so that $\sum_q w_{kq}=\operatorname{Area}(P_k)$. Weights and internal moments are unnormalized, with source coefficients set to one. Other nonempty regions use the MEC center as a node with unit weight. This construction applies a common area density. When $20<\lVert s-q\rVert\le1500$ m, $\widehat P_k(s,q)$ is the intersection of the current region and the predicted bearing wedge; otherwise, the region is retained. The 20 m cutoff corresponds to the service radius. Scoring assumes reception at potentially receiving positions without averaging over unknown radii or emission directions. Execution still updates from actual responses and retains directional regions after no-signal.
+
+The second objective counts travel, measurement, and switching costs for measuring every active channel at s. The Moment control minimizes $J_1$ on the Pareto front. The Pareto control uses the source study's alternative normalized thresholds: at most 5\% greater uncertainty and at least a 20\% reduction in measurement and travel time. Both use the union of shared candidates, filtered by a 1500 m range and 20 m spacing, with every active channel charged. They retain discovery, follow-up caps, the 19.9 m service threshold, and recovery search. Thresholds remain untuned, while complete servicing replaces the original UAV energy and stopping conditions.
+
+In Table S4, the Moment and Pareto criteria yielded mean paired time reductions of \ensuremath{-}2.775\% and 0.539\%, compared with 7.452\% for the windowed policy. Post hoc quadrature and spacing refinement divided each fan triangle into four subtriangles with three nodes each. Both controls completed the original 360 scenarios, averaging 9328.858 and 9137.111 s, with mean paired time reductions of \ensuremath{-}2.786\% and \ensuremath{-}0.700\%. Their trajectories changed in 351 and 355 scenarios, respectively. The refined fixed criteria still did not yield the windowed policy's mean time savings. These comparisons concern task-adapted criteria; complete external planners were not retuned.
+
+\section*{S1.5 Extended results and comparison baselines}
+
+All percentage reductions are arithmetic means of scenario-level paired reductions, not ratios of mean times. Positive values indicate reduced cost. Intervals use 10,000 seed-cluster bootstrap resamples. Only the $W=13$ reuse versus immediate-servicing primary comparison was prespecified; the other intervals are descriptive and unadjusted for multiple comparisons. A dash marks a reference row to which the reduction and interval do not apply.
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Primary evaluation with 840 scenarios per configuration}
+\label{tab:s1}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{.23\linewidth}>{\raggedright\arraybackslash}p{.22\linewidth}rrr@{}}
+\toprule
+Configuration & Comparison baseline & \shortstack[l]{Mean time\\(s)} & \shortstack[l]{Mean reduction\\(\%)} & \shortstack[l]{95\% interval\\(\%)} \\
+\midrule
+Immediate servicing & --- & 10028.305 & --- & --- \\
+$W=13$ window + reuse & Immediate servicing & 9530.206 & 5.103 & [4.558, 5.641] \\
+$W=13$ window, no reuse & Immediate servicing & 10155.052 & \ensuremath{-}1.594 & [\ensuremath{-}2.110, \ensuremath{-}1.051] \\
+$W=25$ window + reuse & Immediate servicing & 9888.676 & 1.524 & [0.594, 2.401] \\
+Greedy Fisher & Immediate servicing & 10883.589 & \ensuremath{-}8.311 & [\ensuremath{-}9.289, \ensuremath{-}7.284] \\
+Cost-normalized Fisher & Immediate servicing & 10423.443 & \ensuremath{-}3.834 & [\ensuremath{-}4.785, \ensuremath{-}2.835] \\
+$W=13$ window + reuse\textsuperscript{\ensuremath{\dagger}} & $W=13$ window, no reuse & 9530.206 & 6.421 & [5.861, 7.004] \\
+\bottomrule
+\end{tabular*}
+\end{minipage}\end{center}
+All configurations serviced 10,920 sources. The final row is the post hoc same-window comparison. The two Fisher criteria are task-adapted candidate selectors, not full reproductions of a learned external planner.
+
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Joint evaluation with 360 scenarios per configuration}
+\label{tab:s2}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{.23\linewidth}>{\raggedright\arraybackslash}p{.22\linewidth}rrr@{}}
+\toprule
+Configuration & Comparison baseline & \shortstack[l]{Mean time\\(s)} & \shortstack[l]{Mean reduction\\(\%)} & \shortstack[l]{95\% interval\\(\%)} \\
+\midrule
+Immediate servicing & --- & 9095.570 & --- & --- \\
+$W=13$ window + reuse & Immediate servicing & 8399.476 & 6.979 & [5.318, 8.540] \\
+Ordinary joint scheduling & Immediate servicing & 8714.631 & 3.222 & [1.875, 4.428] \\
+Joint scheduling + reuse & Immediate servicing & 7800.979 & 13.636 & [12.488, 14.787] \\
+Joint scheduling + reuse\textsuperscript{\ensuremath{\dagger}} & Ordinary joint scheduling & 7800.979 & 10.128 & [9.013, 11.245] \\
+\bottomrule
+\end{tabular*}
+\end{minipage}\end{center}
+All configurations serviced 4680 sources. The 13.636\% comparison uses immediate servicing; the 10.128\% post hoc comparison uses ordinary joint scheduling. The shared 20-seed cohort is distinct from the primary and transfer cohorts.
+
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Joint-scheduling process measures}
+\label{tab:s3}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xrr@{}}
+\toprule
+Measure & \shortstack[l]{Joint\\scheduling} & \shortstack[l]{Joint scheduling\\+ reuse} \\
+\midrule
+Off-station follow-up measurements & 36.206 & 18.144 \\
+Travel distance on segments ending at measurement points (m) & 14677.403 & 7785.985 \\
+Sources requiring no off-station measurements (\%) & 0.000 & 40.769 \\
+Recovery attempts & 16.364 & 7.078 \\
+\bottomrule
+\end{tabularx}
+\end{minipage}\end{center}
+Counts and distances are per-scenario means; the source percentage summarizes full execution histories. Incoming segments are classified by their destination, without allocating travel among multiple purposes. Recovery counts are attempts. The 1908/4680 sources needing no off-station measurements do not establish MEC readiness at service-task entry, which was not labeled in the retained records.
+
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Distribution transfer with 360 scenarios per configuration}
+\label{tab:s4}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}Xrrr@{}}
+\toprule
+Configuration & \shortstack[l]{Mean time\\(s)} & \shortstack[l]{Mean reduction\\(\%)} & \shortstack[l]{95\% interval\\(\%)} \\
+\midrule
+Immediate servicing & 9116.123 & --- & --- \\
+$W=13$ window + reuse & 8370.102 & 7.452 & [6.038, 8.712] \\
+Moment criterion & 9322.062 & \ensuremath{-}2.775 & [\ensuremath{-}4.390, \ensuremath{-}1.289] \\
+Pareto criterion & 9043.438 & 0.539 & [\ensuremath{-}0.986, 2.040] \\
+\bottomrule
+\end{tabularx}
+\end{minipage}\end{center}
+All reductions use immediate servicing as the common baseline. All configurations serviced 4680 sources. The frozen $W=13$ rule is reused without choosing a window on these evaluation scenarios.
+
+
+A separate development sensitivity sweep evaluated every W from 1 to 25 on 36 scenarios from two seed clusters, yielding 936 completed runs. Windows 12, 13, and 25 produced mean reductions of 6.710\%, 6.183\%, and 6.322\%. $W=13$ predates this sweep; it was not selected using these results. The sweep adds no independent evidence to the primary comparison.
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Historical paired evaluations}
+\label{tab:s5}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrrrrr@{}}
+\toprule
+Setting & Split & Pairs & \shortstack[l]{Baseline\\mean (s)} & \shortstack[l]{Candidate\\mean (s)} & \shortstack[l]{Mean reduction\\(\%)} & \shortstack[l]{Faster / tied\\/ slower} \\
+\midrule
+Omni. & Dev. & 84 & 4658.282 & 4368.210 & 6.123 & 76/0/8 \\
+Omni. & Holdout & 280 & 4744.060 & 4442.016 & 6.112 & 232/10/38 \\
+Dir. & Dev. & 112 & 9804.337 & 9403.577 & 4.150 & 48/56/8 \\
+Dir. & Holdout & 112 & 10127.648 & 9562.544 & 5.711 & 54/56/2 \\
+\bottomrule
+\end{tabular*}
+\end{minipage}\end{center}
+Omni. and Dir. denote omnidirectional and directional settings. The omnidirectional comparison changes nearest-target ordering to the entry--exit proxy; the directional comparison changes immediate service to the windowed policy. The historical evidence is reported separately from the new-seed primary evaluation.
+
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Runs in the benchmark-supplied simulator}
+\label{tab:s6}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr@{}}
+\toprule
+Run & Sources & Total time (s) & \shortstack[l]{Time per\\source (s)} \\
+\midrule
+O1 & 14 & 4295.208 & 306.801 \\
+O2 & 11 & 4515.513 & 410.501 \\
+O3 & 15 & 4990.422 & 332.695 \\
+D1 & 11 & 7387.680 & 671.607 \\
+D2 & 15 & 7049.588 & 469.973 \\
+D3 & 16 & 6703.311 & 418.957 \\
+\bottomrule
+\end{tabular*}
+\end{minipage}\end{center}
+O and D denote omnidirectional and directional sources. These six runs serviced 82/82 sources and have no paired efficiency baseline on the same hidden scenarios. Ground truth for those hidden scenarios is not included in the evidence archive.
+
+
+\section*{S1.6 Process accounting and the same-window comparison}
+
+A measurement is assigned to exactly one category: reuse at a discovery station on a detected, unserviced channel; another station measurement on an undetected channel; or an off-station measurement more than $10^{-6}$ m from every discovery station. The categories sum exactly to the billed measurement count in every audited primary pair.
+
+\begin{center}\begin{minipage}{\linewidth}\small
+\captionof{table}{Measurement-category accounting in the 840 primary pairs.}
+\label{tab:s7}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrrr@{}}
+\toprule
+Primary stratum & Pairs & Reuse \ensuremath{\Delta} & \shortstack[l]{Other station\\$\Delta$} & \shortstack[l]{Off-station\\$\Delta$} & \shortstack[l]{All measures\\$\Delta$} \\
+\midrule
+Random & 420 & 39835 & 579 & \ensuremath{-}11277 & 29137 \\
+Boundary & 420 & 0 & 0 & 0 & 0 \\
+All & 840 & 39835 & 579 & \ensuremath{-}11277 & 29137 \\
+\bottomrule
+\end{tabular*}
+\end{minipage}\end{center}
+Deltas are candidate minus immediate servicing and the table reports total counts, not means. In random scenarios, division by 420 gives +94.845 reuse, +1.379 other station, \ensuremath{-}26.850 off-station, and +69.374 total measurements per scenario. Division by 840 gives the overall +34.687 total measurements. Ordinary station scans can change with station order, discovery order, and early termination.
+
+
+The near audit covers 3360 primary trajectories (immediate, W13, W13 without reuse, W25), 720 transfer trajectories (immediate and W13), and 720 joint trajectories (ordinary and reuse), totaling 4800. Every additional station observation produced no near response. This finding does not concern near at first discovery or dedicated follow-up positions. The matched W13/no-reuse and joint comparisons are subsets of this audit, not extra trajectories.
+
+For the 840 same-window pairs, each gain is $100(1-T_{\mathrm{with\_reuse}}/T_{\mathrm{without\_reuse}})$. Its mean is 6.421\%, and mean absolute saving is 624.847 s. Candidate and baseline mean times are 9530.206 and 10155.052 s. The 418 faster, 420 tied, and two slower cases are all included. This is a direct paired calculation, not subtraction of the two gains against immediate servicing.
+
+Each master seed contributes 28 settings. Bootstrap resampling draws 30 seed-level means with replacement 10,000 times using {\fontencoding{OT1}\fontfamily{cmtt}\selectfont random.Random(2026100204)}. Percentiles use linear interpolation at index $(n-1)q$. The descriptive 95\% interval is [5.861\%, 7.004\%]. Equal cluster sizes make the seed-mean average equal the scenario-level average.
+
+The worst transfer case has 16 clustered sources with hash error. Immediate servicing used six stations and 40 off-station measurements; W13 used 25 stations and four off-station measurements. The time increase of 2129.672 s comprises +983.672 s travel, +995 s measurements, +223 s switching, and \ensuremath{-}72 s failed service. Both serviced all 16 sources. This case explains why fewer localization measurements do not alone imply lower complete-task cost.
+
+\section*{S1.7 Reproduction and provenance}
+
+The benchmark parameters and supplied simulator originate in the CUMCM 2026 Problem B materials \cite{sref19}. This study extends an unpublished author submission with synthetic-scenario evaluation and controlled comparisons. The original full submission has not been publicly released. Public technical documentation \cite{sref17,sref18} supplies adopted completion mechanisms and the rolling joint-task rule. These sources are retained as technical provenance, not represented as peer-reviewed academic baselines or original contributions of this article.
+
+The 840-scenario evaluation recorded no dynamic-programming budget or size fallbacks; reconstructed action costs agreed with virtual task times within 3.01 \ensuremath{\times} $10^{-10}$ s. The subset-routing component recorded positive execution time in 3438/5040 runs; single-task selections bypassed it. Transfer checks reconstructed 512,508 actions and 49,509 feasible regions derived from valid bearings. Joint-scheduling checks reconstructed 512,704 actions and 54,188 regions. Both checked cost consistency and containment of the true sources. These checks share geometric components with the policies.
+
+In the transfer evaluation, mean program execution times were 0.249, 0.075, 0.554, and 0.591 s for the windowed policy, immediate servicing, and the Moment and Pareto criteria, respectively. No dynamic-programming or candidate-pool fallback occurred. Ordinary joint scheduling and joint scheduling with reuse averaged 0.239 and 0.321 s, respectively, with zero dynamic-programming fallbacks. Program execution time is reported separately from the virtual task time in Eq. (1) of the main article.
+
+On the pinned runtime, 48 primary runs, four summaries, nine window runs, and 224 historical pairs were reproduced. Historical-pair replay differences were within $10^{-6}$ s, retaining station orders determined by floating-point values. On the 112-scenario historical holdout, Python 3.9 changed the mean paired time reduction from 5.711\% to 6.376\%. Numerical reproduction therefore uses the specified environment. Ground truth for benchmark hidden scenarios is excluded from the supplementary materials.
+
+The four main execution batches total 8640 runs: 5040 primary, 1440 transfer, 720 numerical refinement, and 1440 joint. Refinement reuses the transfer scenarios. The simulator shared by all four frozen snapshots has SHA-256 \nolinkurl{b116073e843d5bf6d949098fe25bbbbd12175295b1bd3504728f24de5ac60602}. Paired inputs and the saved-result analysis script reproduce the primary, same-window, and two joint comparisons without running simulations. The retained reproduction archive contains the paired inputs, analysis scripts, file manifest, and SHA-256 checksums.
+\begin{thebibliography}{S5}
+
+\bibitem[S1]{sref3} S. Engin and V. Isler, ``Active localization of multiple targets from noisy relative measurements,'' in Algorithmic Foundations of Robotics XIV, SPAR 17, Springer, 2021, pp. 398--413, doi: \nolinkurl{10.1007/978-3-030-66723-8_24}.
+
+\bibitem[S2]{sref5} M. Mohammadi and M. W. Shafer, ``UAV path planning for precision multi-target localization,'' IEEE Access, vol. 13, pp. 63715--63728, 2025, doi: \nolinkurl{10.1109/ACCESS.2025.3558700}.
+
+\bibitem[S3]{sref19} CUMCM, ``Problem B: Rapid automatic localization and removal of radio interference sources,'' 2026 Higher Education Press Cup Contemporary Undergraduate Mathematical Contest in Modeling, problem statement and simulator protocol, 2026, in Chinese. [Online]. Available: \url{https://www.mcm.edu.cn/upload_cn/CUMCM2026Problems.zip}
+
+\bibitem[S4]{sref17} skycreeper123, ``2026-MCM1: Algorithm implementation specification,'' public technical documentation, commit b9e31b70, 2026, in Chinese. Accessed: Oct. 2, 2026. [Online]. Available: \url{https://github.com/skycreeper123/2026-MCM1}
+
+\bibitem[S5]{sref18} li2396803, ``CUMCM 2026 Problem B: Radio interference localization and removal,'' public technical documentation, commit 1337c54a, 2026, in Chinese. Accessed: Oct. 2, 2026. [Online]. Available: \url{https://github.com/li2396803/cumcm2026-b-radio-interference-localization}
+
+\end{thebibliography}
+\end{document}
