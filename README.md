@@ -59,3 +59,9 @@ The files are publicly accessible for inspection. No additional reuse license is
 ## Build Supplement S1
 
 In the `supplement` directory, run `pdflatex Supplement-S1.tex` twice using a standard TeX Live or MacTeX installation. The published PDF is provided for readers who do not have LaTeX installed.
+
+## S1.3 wording correction — 2026-11-21
+
+The measurement caps are controller settings, not decisions based on hidden source types. The omnidirectional-only controller allows three follow-up measurements per localization call. The controller allowing directional sources applies four measurements to every channel in the primary, transfer, and joint evaluations, extending to six only under the stated observation conditions. S1.3 now makes this distinction explicit. No algorithms, data, or reported results changed.
+
+The existing v1.0.0 release URL is retained. Its attached supplement PDF and analysis ZIP were refreshed for this correction. The original v1.0.0 Git tag is preserved; GitHub's automatically generated tag source archives represent the original snapshot. Use the attached analysis ZIP for the corrected supplement source and its checksums.
